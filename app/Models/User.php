@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Http\Traits\Uuids;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -12,8 +13,10 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     use Uuids;
-    use HasApiTokens, HasFactory, Notifiable;
+    use SoftDeletes;
 
+
+    protected $dates = ['deleted_at'];
     /**
      * The attributes that are mass assignable.
      *
@@ -36,7 +39,6 @@ class User extends Authenticatable
         'deleted_at',
         'is_deleted'
     ];
-
     /**
      * The attributes that should be hidden for serialization.
      *
