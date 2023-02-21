@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\v1;
 
-use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -10,13 +9,35 @@ use Illuminate\Support\Facades\Hash;
 class UserController extends Controller
 {
     //listing of user
-    public function list()
+    public function list(Request $request)
     {
-        $users = User::get();
+        //validation
+        $this->validate($request, [
+            'perpage'    => 'required|numeric',
+            'page'       => 'required|numeric',
+            'sort_field' => 'nullable|string',
+            'sort_order' => 'nullable|in:asc,desc',
+            'first_name' => 'nullable|string',
+        ]);
+        $users   = User::query();
+        //sorting
+        if ($request->sort_field && $request->sort_order) {
+            $users  =  $users->orderBy($request->sort_field, $request->sort_order);
+        } else {
+            $users  =  $users->orderBy('id', 'DESC');
+        }
+        //searching
+        if (isset($request->first_name)) {
+            $users->where("first_name", "LIKE", "%{$request->first_name}%");
+        }
+        //pagination
+        $perpage = $request->perpage;
+        $page    = $request->page;
+        $users   = $users->skip($perpage * ($page - 1))->take($perpage);
         return response()->json([
             "success" => true,
             "message" => "User list",
-            'data'    => $users
+            'data'    => $users->get()
         ]);
     }
     //create user
@@ -24,14 +45,14 @@ class UserController extends Controller
     {
         //validation code
         $this->validate($request, [
-            'first_name'     => 'required|string',
-            'first_name'     => 'required|string',
-            'email'          => 'required|email',
-            'password'       => 'required|string',
-            'code'           => 'required|string|min:6',
-            'type'           => 'in:user,admin,superadmin',
-            'is_active'      => 'nullable|boolean',
-            'is_first_login' => 'nullable|string',
+            'first_name'      => 'required|string',
+            'first_name'      => 'required|string',
+            'email'           => 'required|email',
+            'password'        => 'required|string',
+            'code'            => 'required|string|min:6',
+            'type'            => 'in:user,admin,superadmin',
+            'is_active'       => 'nullable|boolean',
+            'is_first_login'  => 'nullable|string',
             'roles.*.role_id' => 'required|string',
 
         ]);
@@ -118,7 +139,7 @@ class UserController extends Controller
     }
     public function restoreData($id)
     {
-        User::onlyTrashed()->find($id)->restore();
+        User::onlyTrashed()->findOrFail($id)->restore();
         return response()->json([
             "success" => true,
             "message" => "User Restored successfully.",

@@ -10,13 +10,35 @@ use Illuminate\Http\Request;
 class ModuleController extends Controller
 {
     //listing of modules
-    public function list()
+    public function list(Request $request)
     {
-        $modules = Module::get();
+        //validation
+        $this->validate($request, [
+            'perpage'    => 'required|numeric',
+            'page'       => 'required|numeric',
+            'sort_field' => 'nullable|string',
+            'sort_order' => 'nullable|in:asc,desc',
+            'name'       => 'nullable|string',
+        ]);
+        $modules = Module::query();
+        //sorting
+        if ($request->sort_field && $request->sort_order) {
+            $modules  =   $modules->orderBy($request->sort_field, $request->sort_order);
+        } else {
+            $modules =   $modules->orderBy('id', 'DESC');
+        }
+        //searching
+        if (isset($request->name)) {
+            $modules->where("name", "LIKE", "%{$request->name}%");
+        }
+        //pagination
+        $perpage = $request->perpage;
+        $page    = $request->page;
+        $modules = $modules->skip($perpage * ($page - 1))->take($perpage);
         return response()->json([
             "success" => true,
             "message" => "Module List",
-            "data"    => $modules
+            "data"    => $modules->get()
         ]);
     }
     //create module

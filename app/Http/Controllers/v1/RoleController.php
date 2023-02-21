@@ -8,13 +8,35 @@ use Illuminate\Http\Request;
 class RoleController extends Controller
 {
     //listing of role
-    public function list()
+    public function list(Request $request)
     {
-        $role = Role::get();
+        //validation
+        $this->validate($request, [
+            'perpage'    => 'required|numeric',
+            'page'       => 'required|numeric',
+            'sort_field' => 'nullable|string',
+            'sort_order' => 'nullable|in:asc,desc',
+            'name'       => 'nullable|string',
+        ]);
+        $roles   = Role::query();
+        //sorting
+        if ($request->sort_field && $request->sort_order) {
+            $roles =  $roles->orderBy($request->sort_field, $request->sort_order);
+        } else {
+            $roles =  $roles->orderBy('id', 'DESC');
+        }
+        //searching
+        if (isset($request->name)) {
+            $roles->where("name", "LIKE", "%{$request->name}%");
+        }
+        //pagination
+        $perpage = $request->perpage;
+        $page    = $request->page;
+        $roles   = $roles->skip($perpage * ($page - 1))->take($perpage);
         return response()->json([
             "success" => true,
             "message" => "Role List.",
-            'data'    => $role
+            'data'    => $roles->get()
         ]);
     }
     //create role
@@ -103,7 +125,7 @@ class RoleController extends Controller
     }
     public function restoreData($id)
     {
-        Role::onlyTrashed()->find($id)->restore();
+        Role::onlyTrashed()->findOrFail($id)->restore();
         return response()->json([
             "success" => true,
             "message" => "Role Restored successfully.",

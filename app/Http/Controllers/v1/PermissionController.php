@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\v1;
 
-use App\Models\Module;
 use App\Models\ModulePermission;
 use App\Models\Permission;
 use Illuminate\Http\Request;
@@ -10,13 +9,35 @@ use Illuminate\Http\Request;
 class PermissionController extends Controller
 {
     //listing of permission
-    public function list()
+    public function list(Request $request)
     {
-        $permission = Permission::get();
+        //validation
+        $this->validate($request, [
+            'perpage'    => 'required|numeric',
+            'page'       => 'required|numeric',
+            'sort_field' => 'nullable|string',
+            'sort_order' => 'nullable|in:asc,desc',
+            'name'       => 'nullable|string',
+        ]);
+        $permissions = Permission::query();
+        //sorting
+        if ($request->sort_field && $request->sort_order) {
+            $permissions = $permissions->orderBy($request->sort_field, $request->sort_order);
+        } else {
+            $permissions = $permissions->orderBy('id', 'DESC');
+        }
+        //searching
+        if (isset($request->name)) {
+            $permissions->where("name", "LIKE", "%{$request->name}%");
+        }
+        //pagination
+        $perpage     = $request->perpage;
+        $page        = $request->page;
+        $permissions = $permissions->skip($perpage * ($page - 1))->take($perpage);
         return response()->json([
             "success" => true,
             "message" => "Permission List.",
-            "data"    => $permission
+            "data"    => $permissions->get()
         ]);
     }
     //create permission
@@ -85,10 +106,10 @@ class PermissionController extends Controller
             ModulePermission::updateOrCreate(
                 ['permission_id' => $permission->id, 'module_id' => $module['module_id']],
                 [
-                    'add_access' => $module['add_access'],
-                    'edit_access' => $module['edit_access'],
+                    'add_access'    => $module['add_access'],
+                    'edit_access'   => $module['edit_access'],
                     'delete_access' => $module['delete_access'],
-                    'view_access' => $module['view_access'],
+                    'view_access'   => $module['view_access'],
                 ]
             );
         }
@@ -125,7 +146,8 @@ class PermissionController extends Controller
     }
     public function restoreData($id)
     {
-        Permission::onlyTrashed()->find($id)->restore();
+        Permission::whereId($id)->withTrashed()->restore();
+        ModulePermission::where('permission_id', $id)->withTrashed()->restore();
         return response()->json([
             "success" => true,
             "message" => "Permission Restored successfully.",
