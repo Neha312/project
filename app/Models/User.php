@@ -4,16 +4,13 @@ namespace App\Models;
 
 use App\Http\Traits\Uuids;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use Uuids;
-    use SoftDeletes;
+    use HasApiTokens, Uuids, SoftDeletes;
 
 
     protected $dates = ['deleted_at'];
@@ -57,8 +54,14 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+    //function for user belongs to many roles
     public function roles()
     {
         return $this->belongsToMany(Role::class, 'role_users');
+    }
+    //function for checking user has roles is true or false
+    public function hasAccess($module, $permission)
+    {
+        return $this->roles()->first()->hasRole($module, $permission);
     }
 }

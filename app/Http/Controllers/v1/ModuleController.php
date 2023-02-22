@@ -4,12 +4,11 @@ namespace App\Http\Controllers\v1;
 
 use App\Models\Module;
 use Illuminate\Http\Request;
-
-
+use App\Http\Controllers\Controller;
 
 class ModuleController extends Controller
 {
-    //listing of modules
+    //listing of modules function
     public function list(Request $request)
     {
         //validation
@@ -25,7 +24,7 @@ class ModuleController extends Controller
         if ($request->sort_field && $request->sort_order) {
             $modules  =   $modules->orderBy($request->sort_field, $request->sort_order);
         } else {
-            $modules =   $modules->orderBy('id', 'DESC');
+            $modules  =   $modules->orderBy('id', 'DESC');
         }
         //searching
         if (isset($request->name)) {
@@ -41,12 +40,12 @@ class ModuleController extends Controller
             "data"    => $modules->get()
         ]);
     }
-    //create module
+    //create module function
     public function create(Request $request)
     {
         //validation code
         $this->validate($request, [
-            'module_code' => 'required|string',
+            'module_code' => 'required|string|unique:modules,module_code',
             'name'        => 'required|string',
             'is_active'   => 'nullable|boolean',
             'is_in_menu'  => 'nullable|boolean'
@@ -60,7 +59,7 @@ class ModuleController extends Controller
             "data"    => $module
         ]);
     }
-    //view module
+    //view particuler module function
     public function view($id)
     {
         //find module
@@ -75,7 +74,7 @@ class ModuleController extends Controller
             "data"    => $module
         ]);
     }
-    //update module
+    //update module function
     public function update(Request $request, $id)
     {
         //validation code
@@ -93,9 +92,10 @@ class ModuleController extends Controller
             "message" => "Module Updated successfully.",
         ]);
     }
-    //delete module
+    //delete module function
     public function delete($id, Request $request)
     {
+        //validation
         $this->validate($request, [
             'soft_delete' => 'required|bool'
         ]);
@@ -109,6 +109,7 @@ class ModuleController extends Controller
             "message" => "Module deleted successfully.",
         ]);
     }
+    //restore module function
     public function restoreData($id)
     {
         Module::onlyTrashed()->findOrFail($id)->restore();

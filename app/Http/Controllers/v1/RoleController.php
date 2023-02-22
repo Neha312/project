@@ -4,10 +4,11 @@ namespace App\Http\Controllers\v1;
 
 use App\Models\Role;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 
 class RoleController extends Controller
 {
-    //listing of role
+    //listing of role function
     public function list(Request $request)
     {
         //validation
@@ -39,7 +40,7 @@ class RoleController extends Controller
             'data'    => $roles->get()
         ]);
     }
-    //create role
+    //create role function
     public function create(Request $request)
     {
         //validation code
@@ -60,7 +61,7 @@ class RoleController extends Controller
             'data'    => $roles->load('permissions')
         ]);
     }
-    //view role
+    //view particuler role function
     public function view($id)
     {
         //find role
@@ -75,7 +76,7 @@ class RoleController extends Controller
             "data"    => $role
         ]);
     }
-    //update role
+    //update role function
     public function update(Request $request, $id)
     {
         //validation code
@@ -97,13 +98,14 @@ class RoleController extends Controller
             "message" => "Role Updated successfully.",
         ]);
     }
-    //delete role
+    //delete role function
     public function delete($id, Request $request)
     {
+        //validation
         $this->validate($request, [
             'soft_delete' => 'required|bool'
         ]);
-        //find role
+        //find role from role table
         $roles = Role::findOrFail($id);;
         //delete permission from pivot table
         if ($request->soft_delete) {
@@ -123,6 +125,7 @@ class RoleController extends Controller
             "message" => "Role deleted successfully.",
         ]);
     }
+    //restore role function
     public function restoreData($id)
     {
         Role::onlyTrashed()->findOrFail($id)->restore();

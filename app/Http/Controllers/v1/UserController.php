@@ -4,11 +4,12 @@ namespace App\Http\Controllers\v1;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    //listing of user
+    //listing of user function
     public function list(Request $request)
     {
         //validation
@@ -40,7 +41,7 @@ class UserController extends Controller
             'data'    => $users->get()
         ]);
     }
-    //create user
+    //create user function
     public function create(Request $request)
     {
         //validation code
@@ -68,7 +69,7 @@ class UserController extends Controller
             "data"    => $user->load('roles')
         ]);
     }
-    //view user
+    //view particuler user function
     public function view($id)
     {
         //find user
@@ -83,7 +84,7 @@ class UserController extends Controller
             "data"    => $user
         ]);
     }
-    //update user
+    //update user function
     public function update(Request $request, $id)
     {
         //validation code
@@ -96,7 +97,7 @@ class UserController extends Controller
             'type'            => 'in:user,admin,superadmin',
             'is_active'       => 'nullable|boolean',
             'is_first_login'  => 'nullable|string',
-            'roles.*.role_id'  => 'required|string'
+            'roles.*.role_id' => 'required|string'
         ]);
         //update user
         $users = User::findOrFail($id);
@@ -109,9 +110,10 @@ class UserController extends Controller
             "message" => "User Updated successfully.",
         ]);
     }
-    //delete user
+    //delete user function
     public function delete($id, Request $request)
     {
+        //validation
         $this->validate($request, [
             'soft_delete' => 'required|bool'
         ]);
@@ -137,6 +139,7 @@ class UserController extends Controller
             "message" => "User deleted successfully.",
         ]);
     }
+    //restore user function
     public function restoreData($id)
     {
         User::onlyTrashed()->findOrFail($id)->restore();

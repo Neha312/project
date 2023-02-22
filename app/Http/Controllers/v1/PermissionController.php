@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\v1;
 
-use App\Models\ModulePermission;
 use App\Models\Permission;
 use Illuminate\Http\Request;
+use App\Models\ModulePermission;
+use App\Http\Controllers\Controller;
 
 class PermissionController extends Controller
 {
-    //listing of permission
+    //listing of permission function
     public function list(Request $request)
     {
         //validation
@@ -40,7 +41,7 @@ class PermissionController extends Controller
             "data"    => $permissions->get()
         ]);
     }
-    //create permission
+    //create permission function
     public function create(Request $request)
     {
 
@@ -67,7 +68,7 @@ class PermissionController extends Controller
             "data" => $permission->load('modules')
         ]);
     }
-    //view permission
+    //view particuler permission function
     public function view($id)
     {
         //find permission
@@ -82,7 +83,7 @@ class PermissionController extends Controller
             "data"    => $permission
         ]);
     }
-    //update permission
+    //update permission function
     public function update(Request $request, $id)
     {
         //validation code
@@ -100,9 +101,7 @@ class PermissionController extends Controller
         //update permission
         $permission = Permission::findOrFail($id);
         $permission->update($request->only('name', 'description'));
-        // dd($permission->id);
         foreach ($request['modules'] as $module) {
-            // dd(['module_id' => $module['module_id']]);
             ModulePermission::updateOrCreate(
                 ['permission_id' => $permission->id, 'module_id' => $module['module_id']],
                 [
@@ -118,9 +117,10 @@ class PermissionController extends Controller
             "message" => "Permission Updated successfully.",
         ]);
     }
-    //delete permission
+    //delete permission function
     public function delete($id, Request $request)
     {
+        //validation
         $this->validate($request, [
             'soft_delete' => 'required|bool'
         ]);
@@ -144,6 +144,7 @@ class PermissionController extends Controller
             "message" => "Permission deleted successfully.",
         ]);
     }
+    //restore permission function
     public function restoreData($id)
     {
         Permission::whereId($id)->withTrashed()->restore();
