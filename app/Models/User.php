@@ -12,7 +12,8 @@ class User extends Authenticatable
 {
     use HasApiTokens, Uuids, SoftDeletes;
 
-
+    protected $primaryKey = 'id';
+    protected $keyType = 'string';
     protected $dates = ['deleted_at'];
     /**
      * The attributes that are mass assignable.
@@ -54,14 +55,21 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
-    //function for user belongs to many roles
+    /**
+     * user belong to many role
+     */
     public function roles()
     {
         return $this->belongsToMany(Role::class, 'role_users');
     }
-    //function for checking user has roles is true or false
-    public function hasAccess($module, $permission)
+    /**
+     * function for checking user has roles is true or false
+     */
+    public function hasAccess($modules, $permissions)
     {
-        return $this->roles()->first()->hasRole($module, $permission);
+        foreach ($this->roles as $role) {
+            // dd($role);
+            return $role->hasRole($modules, $permissions);
+        }
     }
 }

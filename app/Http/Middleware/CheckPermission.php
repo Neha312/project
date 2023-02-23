@@ -14,13 +14,13 @@ class CheckPermission
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next, $module, $permission): Response
+    public function handle(Request $request, Closure $next, $modules, $permissions): Response
     {
         //check user type for route access
         if (auth()->user()->type == 'superadmin') {
             return $next($request);
         } else {
-            $user =   Auth::user()->hasAccess($module, $permission);
+            $user = auth()->user()->hasAccess($modules, $permissions);
             if ($user) {
                 return $next($request);
             }

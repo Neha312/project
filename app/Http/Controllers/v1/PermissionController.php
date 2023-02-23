@@ -9,12 +9,17 @@ use App\Http\Controllers\Controller;
 
 class PermissionController extends Controller
 {
-    //listing of permission function
+    /**
+     * API of List Permission
+     *
+     *@param  \Illuminate\Http\Request  $request
+     *@return $permissions
+     */
     public function list(Request $request)
     {
         //validation
         $this->validate($request, [
-            'perpage'    => 'required|numeric',
+            'per_page'    => 'required|numeric',
             'page'       => 'required|numeric',
             'sort_field' => 'nullable|string',
             'sort_order' => 'nullable|in:asc,desc',
@@ -32,16 +37,21 @@ class PermissionController extends Controller
             $permissions->where("name", "LIKE", "%{$request->name}%");
         }
         //pagination
-        $perpage     = $request->perpage;
+        $per_page     = $request->per_page;
         $page        = $request->page;
-        $permissions = $permissions->skip($perpage * ($page - 1))->take($perpage);
+        $permissions = $permissions->skip($per_page * ($page - 1))->take($per_page);
         return response()->json([
             "success" => true,
             "message" => "Permission List.",
             "data"    => $permissions->get()
         ]);
     }
-    //create permission function
+    /**
+     * API of Create Permission
+     *
+     *@param  \Illuminate\Http\Request  $request
+     *@return $permission
+     */
     public function create(Request $request)
     {
 
@@ -51,39 +61,40 @@ class PermissionController extends Controller
             'description'              => 'required|string',
             'is_active'                => 'nullable|boolean',
             'modules.*'                => 'required|array',
-            'modules.*.module_id'      => 'required|string',
+            'modules.*.module_id'      => 'required|string|exists:modules,id',
             'modules.*.add_access'     => 'required|boolean',
             'modules.*.edit_access'    => 'required|boolean',
             'modules.*.delete_access'  => 'required|boolean',
             'modules.*.view_access'    => 'required|boolean',
         ]);
-        //create permission
         $permission = Permission::create($request->only('name', 'description',));
-        //create modules into modulepermission table
         $permission->modules()->createMany($request->modules);
-        //send response
         return response()->json([
             "success" => true,
             "message" => "Permission created successfully.",
             "data" => $permission->load('modules')
         ]);
     }
-    //view particuler permission function
+    /**
+     * API of get perticuler permission details
+     *
+     * @param $id
+     * @return $permission
+     */
     public function view($id)
     {
-        //find permission
         $permission = Permission::with('modules')->findOrFail($id);
-        //send response
-        if (is_null($permission)) {
-            return $this->sendError('Permission not found.');
-        }
         return response()->json([
             "success" => true,
             "message" => "Permission retrieved successfully.",
             "data"    => $permission
         ]);
     }
-    //update permission function
+    /**
+     * API of Update permission
+     *@param  \Illuminate\Http\Request  $request
+     *@param $id
+     */
     public function update(Request $request, $id)
     {
         //validation code
@@ -92,14 +103,18 @@ class PermissionController extends Controller
             'description'              => 'required|string',
             'is_active'                => 'nullable|boolean',
             'modules.*'                => 'required|array',
-            'modules.*.module_id'      => 'required|string',
+            'modules.*.module_id'      => 'required|string|exists:modules,id',
             'modules.*.add_access'     => 'required|boolean',
             'modules.*.edit_access'    => 'required|boolean',
             'modules.*.delete_access'  => 'required|boolean',
             'modules.*.view_access'    => 'required|boolean',
         ]);
-        //update permission
+        $moduleIds = array_column($request->modules, 'module_id');
         $permission = Permission::findOrFail($id);
+        $permission_id = ModulePermission::where('permission_id', $permission->id)->whereNotIn('module_id', $moduleIds);
+        if ($permission_id->count() > 0) {
+            $permission_id->forceDelete();
+        }
         $permission->update($request->only('name', 'description'));
         foreach ($request['modules'] as $module) {
             ModulePermission::updateOrCreate(
@@ -117,7 +132,12 @@ class PermissionController extends Controller
             "message" => "Permission Updated successfully.",
         ]);
     }
-    //delete permission function
+    /**
+     * API of Delete Permission
+     *
+     *@param  \Illuminate\Http\Request  $request
+     *@param $id
+     */
     public function delete($id, Request $request)
     {
         //validation
@@ -129,22 +149,23 @@ class PermissionController extends Controller
             if ($permission->modules()->count() > 0) {
                 $permission->modules()->delete();
             }
-            //delete permission
             $permission->delete();
         } else {
             if ($permission->modules()->count() > 0) {
                 $permission->modules()->forceDelete();
             }
-            //delete permission
             $permission->forceDelete();
         }
-        //send response
         return response()->json([
             "success" => true,
             "message" => "Permission deleted successfully.",
         ]);
     }
-    //restore permission function
+    /**
+     * API of Restore Permission
+     *
+     * @param $id
+     */
     public function restoreData($id)
     {
         Permission::whereId($id)->withTrashed()->restore();

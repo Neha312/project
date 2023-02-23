@@ -13,21 +13,27 @@ class Permission extends Model
     protected $dates    = ['deleted_at'];
     protected $fillable = ['name', 'description', 'created_by', 'updated_by', 'deleted_by', 'is_active', 'is_in_menu'];
 
-    //function for permission belongs to many roles
+    /**
+     * permission belongs to many role
+     */
     public function roles()
     {
         return $this->belongsToMany(Role::class);
     }
-    //hasMany relationship between permission & module
+    /**
+     * permission has many module
+     */
     public function modules()
     {
         return $this->hasMany(ModulePermission::class, 'permission_id');
     }
-    //function for check permission have particuler access in module
-    public function hasPermission($module, $permission)
+    /**
+     * function for check permission have particuler access in module
+     */
+    public function hasPermission($modules, $permissions)
     {
-        $module =  Module::where('module_code', $module)->first();
-        $data   = $this->modules()->where('module_id', $module->id)->where($permission, true)->first();
+        $module =  Module::where('module_code', $modules)->first();
+        $data   = $this->modules()->where('module_id', $module->id)->where($permissions, true)->first();
         if ($data) {
             return true;
         } else {

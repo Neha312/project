@@ -1,47 +1,55 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\v1;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    //user register function
+    /**
+     * API of User registration
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return $token
+     */
     public function register(Request $request)
     {
         //validation
         $request->validate([
             'first_name' => 'required',
-            'last_name'  => 'required',
             'email'      => 'required|email',
             'password'   => 'required',
         ]);
-        //check email id is exists or not
         if (User::where('email', $request->email)->first()) {
             return response([
                 'message' => 'Email Already exists',
                 'status'  => 'failed'
             ], 200);
         }
-        //create user
-        $user = User::create([
-            'first_name' => $request->first_name,
-            'last_name'  => $request->last_name,
-            'email'      => $request->email,
-            'password'   => Hash::make($request->password),
-        ]);
-        //generate token
+        // dd($request->all());
+        $request['password'] = Hash::make($request->password);
+        $user = User::create($request->only('first_name', 'email', 'password'));
+        // $user = User::create([
+        //     'first_name' => $request->first_name,
+        //     'email'      => $request->email,
+        //     'password'   => Hash::make($request->password),
+        // ]);
         $token = $user->createToken($request->email)->plainTextToken;
-        //send response
         return response([
             'token'   => $token,
             'message' => 'User Register Succesfully',
             'status'  => 'Success'
         ], 201);
     }
-    //user login function
+    /**
+     * API of User login
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return $token
+     */
     public function login(Request $request)
     {
         //validation
@@ -49,7 +57,6 @@ class AuthController extends Controller
             'email'    => 'required|email',
             'password' => 'required',
         ]);
-        //check login details
         $user = User::where('email', $request->email)->first();
         if ($user && Hash::check($request->password, $user->password)) {
             $token = $user->createToken($request->email)->plainTextToken;
@@ -65,7 +72,11 @@ class AuthController extends Controller
             ], 401);
         }
     }
-    //user logout function
+    /**
+     * API of User Logout
+     *
+     * @param  \Illuminate\Http\Request  $request
+     */
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();

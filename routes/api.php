@@ -2,7 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
+use App\Http\Controllers\v1\AuthController;
 use App\Http\Controllers\v1\RoleController;
 use App\Http\Controllers\v1\UserController;
 use App\Http\Controllers\v1\ModuleController;
@@ -19,16 +19,13 @@ use App\Http\Controllers\v1\PermissionController;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
 
-Route::post('register', [AuthController::class, 'register']);
-Route::post('login', [AuthController::class, 'login']);
+Route::prefix('v1')->group(function () {
+    Route::post('register', [AuthController::class, 'register']);
+    Route::post('login', [AuthController::class, 'login']);
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('logout', [AuthController::class, 'logout']);
-    Route::prefix('v1')->group(function () {
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('logout', [AuthController::class, 'logout']);
         Route::controller(UserController::class)->prefix('user')->group(function () {
             Route::post('list',  'list')->middleware('checkpermission:user,view_access');
             Route::post('create', 'create')->middleware('checkpermission:user,add_access');

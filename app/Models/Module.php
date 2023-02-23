@@ -11,7 +11,11 @@ class Module extends Model
     use Uuids, SoftDeletes;
     protected $dates    = ['deleted_at'];
     protected $fillable = ['module_code', 'name', 'created_by', 'updated_by', 'deleted_by', 'is_active', 'is_in_menu', 'display_order'];
-    //function for permission belongs to many roles
+
+    /**
+     * modules belongs to many permissions
+     *
+     */
     public function permissions()
     {
         return $this->belongsToMany(Permission::class);

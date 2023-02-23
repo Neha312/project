@@ -13,7 +13,7 @@ class ModulePermission extends Model
 
     protected $dates    = ['deleted_at'];
     protected $fillable = [
-        'peermission_id',
+        'permission_id',
         'module_id',
         'add_access',
         'edit_access',

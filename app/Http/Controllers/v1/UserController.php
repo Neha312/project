@@ -9,12 +9,17 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    //listing of user function
+    /**
+     * API of List User
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return $users
+     */
     public function list(Request $request)
     {
         //validation
         $this->validate($request, [
-            'perpage'    => 'required|numeric',
+            'per_page'    => 'required|numeric',
             'page'       => 'required|numeric',
             'sort_field' => 'nullable|string',
             'sort_order' => 'nullable|in:asc,desc',
@@ -32,16 +37,21 @@ class UserController extends Controller
             $users->where("first_name", "LIKE", "%{$request->first_name}%");
         }
         //pagination
-        $perpage = $request->perpage;
+        $per_page = $request->per_page;
         $page    = $request->page;
-        $users   = $users->skip($perpage * ($page - 1))->take($perpage);
+        $users   = $users->skip($per_page * ($page - 1))->take($per_page);
         return response()->json([
             "success" => true,
             "message" => "User list",
             'data'    => $users->get()
         ]);
     }
-    //create user function
+    /**
+     * API of Create User
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return $user
+     */
     public function create(Request $request)
     {
         //validation code
@@ -57,34 +67,36 @@ class UserController extends Controller
             'roles.*.role_id' => 'required|string',
 
         ]);
-        //encrypt passwod
         $request['password'] = Hash::make($request->password);
-        //create user
         $user = User::create($request->only('first_name', 'last_name', 'password', 'email', 'is_first_login', 'is_active', 'code', 'type'));
         $user->roles()->attach($request->roles);
-        //send response
         return response()->json([
             "success" => true,
             "message" => "User Created successfully.",
             "data"    => $user->load('roles')
         ]);
     }
-    //view particuler user function
+    /**
+     * API of get perticuler user details
+     *
+     * @param  $id
+     * @return $user
+     */
     public function view($id)
     {
-        //find user
         $user = User::with('roles')->findOrFail($id);
-        //send response
-        if (is_null($user)) {
-            return $this->sendError('Role not found.');
-        }
         return response()->json([
             "success" => true,
             "message" => "User retrieved successfully.",
             "data"    => $user
         ]);
     }
-    //update user function
+    /**
+     * API of Update User
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  $id
+     */
     public function update(Request $request, $id)
     {
         //validation code
@@ -99,18 +111,21 @@ class UserController extends Controller
             'is_first_login'  => 'nullable|string',
             'roles.*.role_id' => 'required|string'
         ]);
-        //update user
         $users = User::findOrFail($id);
         $request['password'] = Hash::make($request->password);
         $users->update($request->only('first_name', 'last_name', 'email', 'is_active', 'password', 'is_first_login', 'code', 'type'));
         $users->roles()->sync($request->roles);
-        //send response
         return response()->json([
             "success" => true,
             "message" => "User Updated successfully.",
         ]);
     }
-    //delete user function
+    /**
+     * API of Delete User
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  $id
+     */
     public function delete($id, Request $request)
     {
         //validation
@@ -122,24 +137,23 @@ class UserController extends Controller
             if ($users->roles()->count() > 0) {
                 $users->roles()->delete();
             }
-            //delete user
             $users->delete();
         } else {
             if ($users->roles()->count() > 0) {
                 $users->roles()->forceDelete();
             }
-            //delete user
             $users->forceDelete();
         }
-        //delete roles from pivot table
-
-        //send respponse
         return response()->json([
             "success" => true,
             "message" => "User deleted successfully.",
         ]);
     }
-    //restore user function
+    /**
+     * API of Restore User
+     *
+     * @param  $id
+     */
     public function restoreData($id)
     {
         User::onlyTrashed()->findOrFail($id)->restore();

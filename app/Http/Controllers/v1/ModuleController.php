@@ -8,12 +8,17 @@ use App\Http\Controllers\Controller;
 
 class ModuleController extends Controller
 {
-    //listing of modules function
+    /**
+     * API of List Module
+     *
+     *@param  \Illuminate\Http\Request  $request
+     *@return $module
+     */
     public function list(Request $request)
     {
         //validation
         $this->validate($request, [
-            'perpage'    => 'required|numeric',
+            'per_page'    => 'required|numeric',
             'page'       => 'required|numeric',
             'sort_field' => 'nullable|string',
             'sort_order' => 'nullable|in:asc,desc',
@@ -31,16 +36,21 @@ class ModuleController extends Controller
             $modules->where("name", "LIKE", "%{$request->name}%");
         }
         //pagination
-        $perpage = $request->perpage;
+        $per_page = $request->per_page;
         $page    = $request->page;
-        $modules = $modules->skip($perpage * ($page - 1))->take($perpage);
+        $modules = $modules->skip($per_page * ($page - 1))->take($per_page);
         return response()->json([
             "success" => true,
             "message" => "Module List",
             "data"    => $modules->get()
         ]);
     }
-    //create module function
+    /**
+     * API of Create module
+     *
+     *@param  \Illuminate\Http\Request  $request
+     *@return $module
+     */
     public function create(Request $request)
     {
         //validation code
@@ -50,31 +60,34 @@ class ModuleController extends Controller
             'is_active'   => 'nullable|boolean',
             'is_in_menu'  => 'nullable|boolean'
         ]);
-        //create module
         $module = Module::create($request->only('module_code', 'name', 'is_active', 'is_in_menu'));
-        //send response
         return response()->json([
             "success" => true,
             "message" => "Module created successfully.",
             "data"    => $module
         ]);
     }
-    //view particuler module function
+    /**
+     * API of get perticuler module details.
+     *
+     *@param $id
+     *@return $module
+     */
     public function view($id)
     {
-        //find module
         $module = Module::findOrFail($id);
-        //send response
-        if (is_null($module)) {
-            return $this->sendError('Module not found.');
-        }
         return response()->json([
             "success" => true,
             "message" => "Module retrieved successfully.",
             "data"    => $module
         ]);
     }
-    //update module function
+    /**
+     * API of Update Module.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  $id
+     */
     public function update(Request $request, $id)
     {
         //validation code
@@ -84,15 +97,19 @@ class ModuleController extends Controller
             'is_active'   => 'nullable|boolean',
             'is_in_menu'  => 'nullable|boolean'
         ]);
-        //update module
         Module::findOrFail($id)->update($request->only('module_code', 'name', 'is_active', 'is_in_menu'));
-        //send response
         return response()->json([
             "success" => true,
             "message" => "Module Updated successfully.",
         ]);
     }
-    //delete module function
+
+    /**
+     * API of Delete Module.
+     *
+     *@param  \Illuminate\Http\Request  $request
+     *@param $id
+     */
     public function delete($id, Request $request)
     {
         //validation
@@ -109,7 +126,11 @@ class ModuleController extends Controller
             "message" => "Module deleted successfully.",
         ]);
     }
-    //restore module function
+    /**
+     * API of Restore Module.
+     *
+     * @param $id
+     */
     public function restoreData($id)
     {
         Module::onlyTrashed()->findOrFail($id)->restore();

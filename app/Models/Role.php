@@ -11,20 +11,28 @@ class Role extends Model
     use Uuids, SoftDeletes;
     protected $dates    = ['deleted_at'];
     protected $fillable = ['name', 'description', 'is_active', 'deleted_at', 'is_delete'];
-
-    //function for role belongs to many users
+    /**
+     * role belongs to many user
+     */
     public function users()
     {
         return $this->belongsToMany(User::class);
     }
-    //function for role belongs to many permissions
+    /**
+     * role belongs to many permission
+     */
     public function permissions()
     {
         return $this->belongsToMany(Permission::class, 'permission_roles');
     }
-    //function for checking role has permissions is true or false
-    public function hasRole($module, $permission)
+    /**
+     * function for checking role has permissions is true or false
+     */
+    public function hasRole($modules, $permissions)
     {
-        return $this->permissions()->first()->hasPermission($module, $permission);
+        foreach ($this->permissions as $permission) {
+            // dd($permission->hasPermission($module, $permission));
+            return $permission->hasPermission($modules, $permissions);
+        }
     }
 }
